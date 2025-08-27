@@ -1,29 +1,133 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My WebApp</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#2196f3">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Task Reminder</title>
+  <style>
+    /* giữ nguyên style của m */
+    :root { --bg:#0b1020; --card:#111831; --muted:#9fb0ff; --text:#eef2ff; --accent:#6aa3ff; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, system-ui, -apple-system, Arial; background: linear-gradient(120deg,#0b1020,#0f1530 60%,#0b1020); color: var(--text); }
+    .wrap { max-width: 980px; margin: 32px auto; padding: 0 16px; }
+    .title { font-weight: 800; font-size: 28px; letter-spacing: .3px; margin-bottom: 16px; }
+    .subtitle { color: var(--muted); margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(12,1fr); gap: 16px; }
+    .card { grid-column: span 12; background: radial-gradient(100% 100% at 100% 0%, rgba(106,163,255,.15), transparent 40%), var(--card);
+            border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    @media(min-width:900px){ .span6{grid-column: span 6;} .span8{grid-column: span 8;} .span4{grid-column: span 4;} }
+    label { font-size: 12px; color: var(--muted); display:block; margin-bottom: 6px; text-transform: uppercase; letter-spacing:.8px; }
+    input, textarea, select { width: 100%; background: #0c1230; color: var(--text); border: 1px solid rgba(255,255,255,.1);
+       border-radius: 10px; padding: 10px 12px; outline: none; }
+    textarea { min-height: 110px; resize: vertical; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .btn { appearance: none; border: 1px solid rgba(255,255,255,.12); background: linear-gradient(180deg,#1b254a,#162040);
+           color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; transition:.2s transform, .2s opacity, .2s border;
+           font-weight: 600; }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(106,163,255,.5); }
+    .btn.ok { background: linear-gradient(180deg,#1f9d55,#15803d); border-color: rgba(34,197,94,.5); }
+    .btn.warn { background: linear-gradient(180deg,#c07d21,#a16207); border-color: rgba(245,158,11,.5); }
+    .btn.danger { background: linear-gradient(180deg,#c2410c,#9a3412); border-color: rgba(239,68,68,.5); }
+    .pill { padding: 6px 10px; border-radius: 999px; background: rgba(106,163,255,.2); color: var(--text); font-size: 12px; border: 1px solid rgba(106,163,255,.4); }
+    .list { margin-top: 8px; max-height: 260px; overflow: auto; border:1px solid rgba(255,255,255,.06); border-radius:12px; }
+    .item { display:flex; gap:10px; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom: 1px dashed rgba(255,255,255,.06); }
+    .item:last-child { border-bottom: none; }
+    .muted { color: var(--muted); }
+  </style>
 </head>
 <body>
-  <h1>Hello PWA 🚀</h1>
-  <button id="loadData">Load Data từ Google Sheet</button>
-  <pre id="result"></pre>
+  <div class="wrap">
+    <div class="title">AI Task Reminder</div>
+    <div class="subtitle">Nhập <span class="pill">Prompt</span>, email nhận thông báo, thêm task hằng ngày, <strong>Chạy ngay</strong> hoặc <strong>Cài lịch</strong>. Không cần mở Google Sheet.</div>
+
+    <div class="grid">
+      <!-- giữ nguyên phần UI (cards, input, buttons) -->
+      <!-- ... copy nguyên phần HTML UI như của m ... -->
+    </div>
+  </div>
 
   <script>
-    // gọi API Apps Script (thay YOUR_SCRIPT_URL)
-    document.getElementById("loadData").onclick = async () => {
-      let res = await fetch("https://script.google.com/macros/s/AKfycbzXWtIG2AeMmTAcWr0QCPiq7HYcdnOJnaaKsYuqVFajVmIFZNn4-wu4mV6E7fwSNiS71Q/exec");
-      let data = await res.json();
-      document.getElementById("result").textContent = JSON.stringify(data, null, 2);
-    };
+    const API_URL = "https://script.google.com/macros/s/AKfycbzXWtIG2AeMmTAcWr0QCPiq7HYcdnOJnaaKsYuqVFajVmIFZNn4-wu4mV6E7fwSNiS71Q/exec"; // 👉 thay bằng WebApp URL thật
 
-    // đăng ký Service Worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
+    const $ = sel => document.querySelector(sel);
+
+    async function callApi(action, params={}) {
+      const url = new URL(API_URL);
+      url.search = new URLSearchParams({ action, ...params });
+      const res = await fetch(url);
+      return res.json();
     }
+
+    async function load() {
+      const data = await callApi("getInitData");
+      $("#prompt").value = data.prompt || "";
+      $("#email").value  = data.email  || "";
+      $("#scheduleMsg").textContent = data.schedule?.label || "";
+      renderTasks(data.tasks || []);
+    }
+
+    function renderTasks(tasks) {
+      const list = $("#list"); list.innerHTML = "";
+      if (!tasks || tasks.length === 0) { $("#empty").style.display = "block"; return; }
+      $("#empty").style.display = "none";
+      tasks.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div>
+            <div><strong>#${t.id}</strong> — ${t.task}</div>
+            <div class="muted">⏰ ${t.deadlineStr} — còn ${t.diffDays} ngày ${t.done ? "(đã xong)" : ""}</div>
+          </div>
+          <div>
+            ${t.done ? "" : `<button class="btn" onclick="markDone(${t.id})">✔️ Done</button>`}
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function saveSettings() {
+      $("#settingsMsg").textContent = "Đang lưu...";
+      await callApi("saveSettings", { email: $("#email").value, prompt: $("#prompt").value });
+      $("#settingsMsg").textContent = "✅ Đã lưu cài đặt";
+    }
+
+    async function runNow() {
+      $("#settingsMsg").textContent = "Đang chạy...";
+      await callApi("runNow");
+      $("#settingsMsg").textContent = "✅ Đã chạy xong";
+      load();
+    }
+
+    async function setSchedule() {
+      $("#scheduleMsg").textContent = "Đang cài lịch...";
+      await callApi("setSchedule", { mode: $("#mode").value, value: $("#value").value });
+      $("#scheduleMsg").textContent = "✅ Đã cài lịch";
+    }
+
+    async function clearSchedule() {
+      await callApi("clearSchedule");
+      $("#scheduleMsg").textContent = "✅ Đã xoá lịch";
+    }
+
+    async function addTask() {
+      const text = $("#taskText").value.trim();
+      const deadline = $("#deadline").value;
+      if (!text || !deadline) { $("#taskMsg").textContent = "⚠️ Điền đủ task & deadline."; return; }
+      $("#taskMsg").textContent = "Đang thêm…";
+      await callApi("addTask", { text, deadline });
+      $("#taskMsg").textContent = "✅ Đã thêm task";
+      $("#taskText").value = "";
+      $("#deadline").value = "";
+      load();
+    }
+
+    async function markDone(id) {
+      await callApi("markDone", { id });
+      load();
+    }
+
+    document.addEventListener("DOMContentLoaded", load);
   </script>
 </body>
 </html>
