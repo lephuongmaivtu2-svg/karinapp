@@ -1,7 +1,7 @@
-self.addEventListener("install", () => {
+self.addEventListener("install", (event) => {
   console.log("Service Worker installed");
 });
 
 self.addEventListener("fetch", (event) => {
-  // Có thể thêm cache nếu muốn offline
+  // cho phép web hoạt động offline (có thể viết thêm cache logic)
 });
