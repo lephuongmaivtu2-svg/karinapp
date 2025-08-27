@@ -1,6 +1,6 @@
 {
-  "name": "Karin App",
-  "short_name": "Karin",
+  "name": "My WebApp",
+  "short_name": "WebApp",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
