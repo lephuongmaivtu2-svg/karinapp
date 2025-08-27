@@ -1,31 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Karin App</title>
+  <title>My WebApp</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2196f3">
 </head>
 <body>
-  <h1>Karin App 🚀</h1>
-  <ul id="tasks"></ul>
+  <h1>Hello PWA 🚀</h1>
+  <button id="loadData">Load Data từ Google Sheet</button>
+  <pre id="result"></pre>
 
   <script>
-    // Thay link API GAS của m vào đây
-    fetch("https://script.google.com/macros/s/AKfycbx12345/exec")
-      .then(res => res.json())
-      .then(data => {
-        let ul = document.getElementById("tasks");
-        data.forEach(row => {
-          let li = document.createElement("li");
-          li.textContent = row.join(" | ");
-          ul.appendChild(li);
-        });
-      });
-  </script>
+    // gọi API Apps Script (thay YOUR_SCRIPT_URL)
+    document.getElementById("loadData").onclick = async () => {
+      let res = await fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec");
+      let data = await res.json();
+      document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+    };
 
-  <script>
+    // đăng ký Service Worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js");
     }
