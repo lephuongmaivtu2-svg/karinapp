@@ -15,7 +15,7 @@
   <script>
     // gọi API Apps Script (thay YOUR_SCRIPT_URL)
     document.getElementById("loadData").onclick = async () => {
-      let res = await fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec");
+      let res = await fetch("https://script.google.com/macros/s/AKfycbzKjuKBA6EQcNEjEUwhIhhzyHy1FKmNJad3a2qjK9hoE49aSYZ26eeTpsZ7Ip1fh-EcKw/exec");
       let data = await res.json();
       document.getElementById("result").textContent = JSON.stringify(data, null, 2);
     };
