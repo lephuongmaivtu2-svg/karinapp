@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karin App</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2196f3">
+</head>
+<body>
+  <h1>Karin App 🚀</h1>
+  <ul id="tasks"></ul>
+
+  <script>
+    // Thay link API GAS của m vào đây
+    fetch("https://script.google.com/macros/s/AKfycbx12345/exec")
+      .then(res => res.json())
+      .then(data => {
+        let ul = document.getElementById("tasks");
+        data.forEach(row => {
+          let li = document.createElement("li");
+          li.textContent = row.join(" | ");
+          ul.appendChild(li);
+        });
+      });
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
+</body>
+</html>
